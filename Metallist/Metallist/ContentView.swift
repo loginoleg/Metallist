@@ -44,16 +44,11 @@ struct ContentView: View {
                 EmptyView()
             }
             .frame(minWidth: 200, maxWidth: 300)
-
+            
             if let id = selectedShaderID,
                let shader = shaders.first(where: { $0.id == id }) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(shader.name)
-                        .font(.title)
-                    Text(shader.description)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Divider()
+                    
                     HStack {
                         VStack {
                             Text("Original")
@@ -91,13 +86,23 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-
-
+            
+            
             if let id = selectedShaderID,
                let shader = shaders.first(where: { $0.id == id }) {
-                if shader.parameters.count > 0 {
+                
+                Divider()
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(shader.name)
+                        .font(.title2)
+                    Text(shader.description)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 8)
+                    
                     Divider()
-                    VStack(alignment: .leading, spacing: 10) {
+                    
+                    if shader.parameters.count > 0 {
                         Text("Parameters")
                             .font(.headline)
                         ForEach(shader.parameters) { param in
@@ -110,13 +115,14 @@ struct ContentView: View {
                                 ), in: param.range)
                             }
                         }
-                        Spacer()
                     }
-                    .padding()
-                    .frame(width: 250)
-                    .background(Color(NSColor.controlBackgroundColor))
+                    Spacer()
                 }
+                .padding()
+                .frame(width: 250)
+                .background(Color(NSColor.controlBackgroundColor))
             }
+            
         }
     }
 
