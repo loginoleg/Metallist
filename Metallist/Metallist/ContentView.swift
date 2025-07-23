@@ -15,28 +15,40 @@ struct ShaderParameter: Identifiable, Hashable {
 }
 
 struct Shader: Identifiable, Equatable, Hashable {
-    let id: String
+    let id = UUID().uuidString
     let name: String
     let description: String
     let parameters: [ShaderParameter]
 }
 
+
+
 struct ContentView: View {
     @State private var shaders: [Shader] = [
-        Shader(id: "wave", name: "Wave", description: "Wavy distortion effect.", parameters: [
-            ShaderParameter(name: "Amplitude", value: 0.5, range: 0.0...1.0),
-            ShaderParameter(name: "Frequency", value: 2.0, range: 1.0...5.0)
+        Shader(name: "CIPixellate", description: "Wavy distortion effect.", parameters: [
+            ShaderParameter(name: kCIInputScaleKey, value: 0.5, range: 0.0...1.0),
         ]),
-        Shader(id: "blur", name: "Blur", description: "Applies blur to the image.", parameters: []),
-        Shader(id: "color_shift", name: "Color Shift", description: "Color channels are shifted.", parameters: [])
+        Shader(name: "CISepiaTone", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIGaussianBlur", description: "Applies blur to the image.", parameters: []),
+        Shader(name: "CIBokehBlur", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIBoxBlur", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIColorThreshold", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIComicEffect", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIPhotoEffectNoir", description: "Color channels are shifted.", parameters: [])
+        
     ]
+    
     @State private var selectedShaderID: Shader.ID?
 
     var body: some View {
         HStack(spacing: 0) {
             NavigationSplitView {
                 List(shaders, selection: $selectedShaderID) { shader in
-                    Text(shader.name)
+                    HStack {
+                        Text(shader.name)
+                        Spacer()
+                        Image(systemName: "apple.logo")
+                    }
                 }
                 .frame(minWidth: 250)
             } detail: {
@@ -49,13 +61,14 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         VStack {
-                            Text("Shader Applied")
+                            Text("Output")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(.bottom, 4)
                             if let nsImage = NSImage(named: "img") {
-                                
-                                Image(nsImage: nsImage.pixelized())
+                                Image(nsImage: nsImage.applyFilter(name: shader.name, configure: { filter in
+                                    
+                                })!)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -130,26 +143,62 @@ import SwiftUI
 import CoreImage
 import CoreImage.CIFilterBuiltins
 
+
+
 extension NSImage {
-    func pixelized(scale: Float = 20) -> NSImage {
+  
+    func applyFilter(_ filter: CIFilter) -> NSImage? {
         guard let tiffData = self.tiffRepresentation,
               let ciImage = CIImage(data: tiffData) else {
-            return self
+            return nil
         }
+
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        
+        let context = CIContext()
+        guard let outputImage = filter.outputImage,
+              let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            return nil
+        }
+
+        return NSImage(cgImage: cgImage, size: self.size)
+    }
+    
+    func applyFilter(name: String, configure: (CIFilter) -> Void) -> NSImage? {
+        guard let tiffData = self.tiffRepresentation,
+              let ciImage = CIImage(data: tiffData),
+              let filter = CIFilter(name: name) else {
+            return nil
+        }
+
+        filter.setValue(ciImage, forKey: kCIInputImageKey)
+        configure(filter)
 
         let context = CIContext()
-        let filter = CIFilter.pixellate()
-        filter.inputImage = ciImage
-        filter.scale = scale
-
-        if let output = filter.outputImage,
-           let cgimg = context.createCGImage(output, from: output.extent) {
-            let size = NSSize(width: output.extent.width, height: output.extent.height)
-            let finalImage = NSImage(cgImage: cgimg, size: size)
-            return finalImage
+        guard let outputImage = filter.outputImage,
+              let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            return nil
         }
 
-        return self
+        return NSImage(cgImage: cgImage, size: self.size)
+    }
+    
+    func pixelated(scale: Float = 10.0) -> NSImage? {
+        let filter = CIFilter(name: "CIPixellate")!
+        filter.setValue(scale, forKey: kCIInputScaleKey)
+        return applyFilter(filter)
+    }
+    
+    func blurred(radius: Float = 5.0) -> NSImage? {
+        let filter = CIFilter(name: "CIGaussianBlur")!
+        filter.setValue(radius, forKey: kCIInputRadiusKey)
+        return applyFilter(filter)
+    }
+    
+    func sepia(intensity: Float = 1.0) -> NSImage? {
+        let filter = CIFilter(name: "CISepiaTone")!
+        filter.setValue(intensity, forKey: kCIInputIntensityKey)
+        return applyFilter(filter)
     }
 
 }
