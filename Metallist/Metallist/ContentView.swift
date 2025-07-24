@@ -29,11 +29,19 @@ struct ContentView: View {
         Shader(name: "CISepiaTone", description: "Color channels are shifted.", parameters: []),
         Shader(name: "CIGaussianBlur", description: "Applies blur to the image.", parameters: []),
         Shader(name: "CIBokehBlur", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIBoxBlur", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIBoxBlur", description: "Color channels are shifted.", parameters: [
+            ShaderParameter(name: "inputRadius", value: 25, range: 1...50),
+        ]),
         Shader(name: "CIColorThreshold", description: "Color channels are shifted.", parameters: []),
         Shader(name: "CIComicEffect", description: "Color channels are shifted.", parameters: []),
         Shader(name: "CIPhotoEffectNoir", description: "Color channels are shifted.", parameters: []),
         Shader(name: "CIThermal", description: "Color channels are shifted.", parameters: []),
+        Shader(name: "CIBumpDistortion", description: "Color channels are shifted.", parameters: [
+            ShaderParameter(name: kCIInputScaleKey, value: 5, range: 1...10),
+            ShaderParameter(name: "inputRadius", value: 25, range: 1...50),
+
+        ]),
+        
         
     ]
     
