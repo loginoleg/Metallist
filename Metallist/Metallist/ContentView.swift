@@ -22,45 +22,21 @@ struct Shader: Identifiable, Equatable, Hashable {
 }
 
 struct ContentView: View {
-    @State private var shaders: [Shader] = [
-        Shader(name: "CIPixellate", description: "Wavy distortion effect.", parameters: [
-            ShaderParameter(name: kCIInputScaleKey, value: 5, range: 1...10),
-        ]),
-        Shader(name: "CISepiaTone", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIGaussianBlur", description: "Applies blur to the image.", parameters: []),
-        Shader(name: "CIBokehBlur", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIBoxBlur", description: "Color channels are shifted.", parameters: [
-            ShaderParameter(name: "inputRadius", value: 25, range: 1...50),
-        ]),
-        Shader(name: "CIColorThreshold", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIComicEffect", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIPhotoEffectNoir", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIThermal", description: "Color channels are shifted.", parameters: []),
-        Shader(name: "CIBumpDistortion", description: "Color channels are shifted.", parameters: [
-            ShaderParameter(name: kCIInputScaleKey, value: 5, range: 1...10),
-            ShaderParameter(name: "inputRadius", value: 25, range: 1...50),
-
-        ]),
-        
-        
-    ]
     
-    @State private var selectedShaderID: Shader.ID?
-    @State private var currentShader: Shader?
+    @StateObject private var viewModel = ShaderViewModel()
 
     var body: some View {
         HStack(spacing: 0) {
             NavigationSplitView {
-                List(shaders, selection: $selectedShaderID) { shader in
+                List(viewModel.shaders, selection: $viewModel.selectedShaderID) { shader in
                     HStack {
                         Text(shader.name)
                         Spacer()
                         Image(systemName: "apple.logo")
                     }
                 }
-                .onChange(of: selectedShaderID) { old, newID in
+                .onChange(of: viewModel.selectedShaderID) { old, newID in
                     if let id = newID {
-                        currentShader = shaders.first(where: { $0.id == id })
                     }
                 }
                 .frame(minWidth: 250)
@@ -69,8 +45,8 @@ struct ContentView: View {
             }
             .frame(minWidth: 250, maxWidth: 250)
             
-            if let id = selectedShaderID {
-                if let shader = currentShader {
+            if let id = viewModel.selectedShaderID {
+                if let shader = viewModel.currentShader {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             VStack {
@@ -83,7 +59,7 @@ struct ContentView: View {
                                         for param in shader.parameters {
                                             filter.setValue(param.value, forKey: param.name)
                                         }
-                                    })!)
+                                    }) ?? nsImage)
                                         .resizable()
                                         .scaledToFit()
                                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -107,8 +83,8 @@ struct ContentView: View {
             }
             
             
-            if let id = selectedShaderID {
-                if let shader = currentShader {
+            if let id = viewModel.selectedShaderID {
+                if let shader = viewModel.currentShader {
                     Divider()
                     VStack(alignment: .leading, spacing: 10) {
                         Text(shader.name)
@@ -125,14 +101,12 @@ struct ContentView: View {
                                 HStack {
                                     Text(param.name)
                                         .frame(width: 100, alignment: .leading)
-                                    if let index = currentShader?.parameters.firstIndex(where: { $0.id == param.id }) {
-                                        Slider(value: Binding(
-                                            get: { currentShader?.parameters[index].value ?? param.value },
-                                            set: { newValue in
-                                                currentShader?.parameters[index].value = newValue
-                                            }
-                                        ), in: param.range)
-                                    }
+                                    Slider(value: Binding(
+                                        get: { param.value },
+                                        set: { newValue in
+                                            viewModel.updateParameter(for: shader.id, paramID: param.id, newValue: newValue)
+                                        }
+                                    ), in: param.range)
                                 }
                             }
                         }
@@ -220,3 +194,5 @@ extension NSImage {
     }
 
 }
+
+

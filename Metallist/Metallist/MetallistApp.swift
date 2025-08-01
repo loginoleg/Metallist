@@ -10,9 +10,18 @@
  */
 
 import SwiftUI
+import CoreImage
 
 @main
 struct MetallistApp: App {
+    
+    
+    init() {
+        let builtIn = CIFilter.filterNames(inCategory: kCICategoryBuiltIn)
+        print("builtIn: \(builtIn)")
+    }
+    
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
